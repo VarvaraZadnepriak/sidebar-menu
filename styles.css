@@ -118,12 +118,15 @@ svg {
 
 .item {
   display: flex;
-  align-items: center;
+  /* Иконка остаётся у первой строки, когда подпись переносится */
+  align-items: flex-start;
   gap: 16px;
   width: calc(100% - 20px);
-  height: 36px;
+  /* Длинная подпись переносится и увеличивает высоту пункта */
+  min-height: 36px;
+  height: auto;
   margin: 0 10px;
-  padding: 0 12px;
+  padding: 8px 12px;
   border: 0;
   border-radius: 18px;
   background: transparent;
@@ -144,11 +147,14 @@ svg {
   10 + 12 в широком меню и 14 + 8 в узком дают одну и ту же координату иконки.
 */
 .sidebar.collapsed .item {
+  align-items: center;
   width: 36px;
+  height: 36px;
   margin-left: 14px;
   padding: 0 8px;
   gap: 0;
   border-radius: 50%;
+  overflow: hidden;
 }
 
 .item:hover {
@@ -178,9 +184,8 @@ svg {
 
 .label {
   display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 20px;
+  overflow-wrap: break-word;
 }
 
 .sidebar.collapsed .label-clip {
