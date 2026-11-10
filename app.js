@@ -6,6 +6,36 @@ const nav = document.getElementById("nav");
 const tooltip = document.getElementById("tooltip");
 
 let tipTimer = 0;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+// Фиксирует ширину подписи, чтобы при смене ширины колонки текст не переносился заново.
+function pinLabels() {
+  document.querySelectorAll(".label").forEach((label) => {
+    const box = label.getBoundingClientRect();
+    if (box.width < 1 || box.height < 1) return;
+    label.style.width = `${box.width}px`;
+    label.style.maxHeight = `${box.height}px`;
+  });
+}
+
+function pinnedLabels() {
+  return [...document.querySelectorAll(".label")].filter((label) => label.style.maxHeight);
+}
+
+// После раскрытия колонки отдаёт подписям их настоящую высоту с переносом.
+function settleLabels() {
+  const labels = pinnedLabels();
+  if (sidebar.classList.contains("collapsed")) return;
+
+  labels.forEach((label) => {
+    label.style.width = "";
+    label.style.maxHeight = "20px";
+  });
+  sidebar.getBoundingClientRect();
+  labels.forEach((label) => {
+    label.style.maxHeight = `${label.scrollHeight}px`;
+  });
+}
 
 // Раскрывает или закрывает одну группу и меняет её подпись More/Less.
 function setGroup(button, open) {
@@ -70,12 +100,28 @@ document.querySelectorAll("[data-tooltip]").forEach((element) => {
 });
 
 menuToggle.addEventListener("click", () => {
+  const collapsing = !sidebar.classList.contains("collapsed");
+  if (collapsing && !reduceMotion.matches) {
+    pinLabels();
+    sidebar.getBoundingClientRect();
+    pinnedLabels().forEach((label) => {
+      label.style.maxHeight = "20px";
+    });
+  }
+
   const collapsed = sidebar.classList.toggle("collapsed");
   const name = collapsed ? "Expand menu" : "Collapse menu";
   menuToggle.setAttribute("aria-expanded", String(!collapsed));
   menuToggle.setAttribute("aria-label", name);
   menuToggle.dataset.tooltip = name;
   hideTip();
+
+  if (reduceMotion.matches) settleLabels();
+});
+
+sidebar.addEventListener("transitionend", (event) => {
+  if (event.target !== sidebar || event.propertyName !== "width") return;
+  settleLabels();
 });
 
 // Клик по любой группе More, независимо от того, где она стоит в списке.

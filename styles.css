@@ -147,11 +147,10 @@ svg {
   10 + 12 в широком меню и 14 + 8 в узком дают одну и ту же координату иконки.
 */
 .sidebar.collapsed .item {
-  align-items: center;
   width: 36px;
-  height: 36px;
   margin-left: 14px;
-  padding: 0 8px;
+  /* Тот же верхний отступ, что у широкого пункта: иконка не смещается по вертикали */
+  padding: 8px 8px;
   gap: 0;
   border-radius: 50%;
   overflow: hidden;
@@ -185,7 +184,14 @@ svg {
 .label {
   display: block;
   line-height: 20px;
+  overflow: hidden;
   overflow-wrap: break-word;
+  transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* В круге видна одна строка. Лишние строки обрезает max-height, а не перенос по узкой колонке. */
+.sidebar.collapsed .label {
+  max-height: 20px;
 }
 
 .sidebar.collapsed .label-clip {
