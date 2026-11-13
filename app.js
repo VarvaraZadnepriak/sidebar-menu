@@ -1,4 +1,5 @@
-// Меню размечено в index.html. Здесь только сворачивание, группы More и подсказки.
+// Меню размечено в index.html. Здесь сворачивание, группы More, подсказки
+// и выделение пункта по адресу (/tasks и т.д.).
 
 const sidebar = document.getElementById("sidebar");
 const menuToggle = document.getElementById("menu-toggle");
@@ -49,6 +50,86 @@ function setGroup(button, open) {
   const name = open ? button.dataset.openLabel : button.dataset.closedLabel;
   button.querySelector(".label").textContent = name;
   button.dataset.tooltip = name;
+}
+
+let revealToken = 0;
+
+// Прокручивает список, только если пункт не целиком виден.
+function scrollItemIntoView(item) {
+  const margin = 8;
+  const itemBox = item.getBoundingClientRect();
+  const navBox = nav.getBoundingClientRect();
+  const viewHeight = navBox.height - margin * 2;
+
+  if (itemBox.height >= viewHeight) {
+    nav.scrollTop += itemBox.top - navBox.top - margin;
+    return;
+  }
+
+  if (itemBox.top < navBox.top + margin) {
+    nav.scrollTop -= navBox.top + margin - itemBox.top;
+  } else if (itemBox.bottom > navBox.bottom - margin) {
+    nav.scrollTop += itemBox.bottom - (navBox.bottom - margin);
+  }
+}
+
+// Если пункт внутри закрытой группы More, раскрывает именно её.
+function openGroupFor(item) {
+  const submenu = item.closest(".submenu");
+  if (!submenu || submenu.classList.contains("open")) return null;
+  const button = nav.querySelector(`[aria-controls="${submenu.id}"]`);
+  if (!button) return null;
+  setGroup(button, true);
+  return submenu;
+}
+
+function currentPath() {
+  const path = decodeURIComponent(location.pathname).replace(/\/+$/, "");
+  return path || "/";
+}
+
+// Совпадает data-path пункта с адресом в строке браузера.
+function revealFromUrl() {
+  const token = ++revealToken;
+  const path = currentPath();
+  let current = null;
+
+  nav.querySelectorAll(".item[data-path]").forEach((item) => {
+    const selected = item.dataset.path === path;
+    item.classList.toggle("active", selected);
+    if (selected) {
+      item.setAttribute("aria-current", "page");
+      current = item;
+    } else {
+      item.removeAttribute("aria-current");
+    }
+  });
+
+  if (!current) return;
+
+  const finish = () => {
+    if (token !== revealToken) return;
+    scrollItemIntoView(current);
+  };
+
+  const submenu = openGroupFor(current);
+  if (!submenu || reduceMotion.matches) {
+    finish();
+    return;
+  }
+
+  let timer = 0;
+  const onEnd = (event) => {
+    if (event.target !== submenu || event.propertyName !== "grid-template-rows") return;
+    submenu.removeEventListener("transitionend", onEnd);
+    clearTimeout(timer);
+    finish();
+  };
+  submenu.addEventListener("transitionend", onEnd);
+  timer = setTimeout(() => {
+    submenu.removeEventListener("transitionend", onEnd);
+    finish();
+  }, 400);
 }
 
 function hideTip() {
@@ -124,13 +205,26 @@ sidebar.addEventListener("transitionend", (event) => {
   settleLabels();
 });
 
-// Клик по любой группе More, независимо от того, где она стоит в списке.
+// Клик по группе More или по пункту. Адрес меняется без перезагрузки.
 nav.addEventListener("click", (event) => {
-  const button = event.target.closest(".more-toggle");
-  if (!button || !nav.contains(button)) return;
-  setGroup(button, button.getAttribute("aria-expanded") !== "true");
+  const more = event.target.closest(".more-toggle");
+  if (more && nav.contains(more)) {
+    setGroup(more, more.getAttribute("aria-expanded") !== "true");
+    return;
+  }
+
+  const item = event.target.closest(".item");
+  if (!item || !nav.contains(item) || !item.dataset.path) return;
+  if (item.dataset.path !== currentPath()) {
+    history.pushState(null, "", item.dataset.path);
+  }
+  revealFromUrl();
 });
 
 // Подсказка не должна ехать вместе со списком или окном.
 nav.addEventListener("scroll", hideTip, { passive: true });
 window.addEventListener("resize", hideTip);
+
+// Вставка адреса перезагружает страницу. Назад и вперёд приходят сюда.
+window.addEventListener("popstate", revealFromUrl);
+revealFromUrl();

@@ -21,12 +21,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-button {
+button,
+.item {
   font: inherit;
   color: inherit;
-}
-
-button {
   cursor: pointer;
 }
 
@@ -158,6 +156,16 @@ svg {
 
 .item:hover {
   background: #e8eaed;
+}
+
+.item.active {
+  background: #d3e3fd;
+  color: #041e49;
+  font-weight: 500;
+}
+
+.item.active:hover {
+  background: #c2d7f7;
 }
 
 .icon-wrap {
