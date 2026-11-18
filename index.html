@@ -461,6 +461,45 @@
         </ul>
       </nav>
     </aside>
+    <script>
+      // Парсер ещё не отпустил страницу на отрисовку. Если адрес внутри More,
+      // группа открывается здесь: иначе она успевает приехать закрытой и раскрывается.
+      (() => {
+        const path = decodeURIComponent(location.pathname).replace(/\/+$/, "") || "/";
+        let current = null;
+        document.querySelectorAll(".item[data-path]").forEach((item) => {
+          if (item.dataset.path === path) current = item;
+        });
+        if (!current) return;
+
+        current.classList.add("active");
+        current.setAttribute("aria-current", "page");
+
+        const submenu = current.closest(".submenu");
+        if (!submenu || submenu.classList.contains("open")) return;
+        const button = document.querySelector(`[aria-controls="${submenu.id}"]`);
+        if (!button) return;
+
+        submenu.classList.add("instant");
+        button.classList.add("instant");
+        submenu.getBoundingClientRect();
+
+        submenu.classList.add("open");
+        button.classList.add("open");
+        button.setAttribute("aria-expanded", "true");
+        submenu.removeAttribute("inert");
+        submenu.setAttribute("aria-hidden", "false");
+        const name = button.dataset.openLabel;
+        button.querySelector(".label").textContent = name;
+        button.dataset.tooltip = name;
+        submenu.getBoundingClientRect();
+
+        requestAnimationFrame(() => {
+          submenu.classList.remove("instant");
+          button.classList.remove("instant");
+        });
+      })();
+    </script>
 
     <!-- Заглушка справа. Клик по пунктам меню её не меняет. -->
     <main class="content">
