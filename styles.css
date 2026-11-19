@@ -216,6 +216,13 @@ svg {
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Первая отрисовка по адресу внутри More: без анимации из закрытого состояния */
+.submenu.instant,
+.submenu.instant .item,
+.more-toggle.instant .chevron {
+  transition: none;
+}
+
 /* Стрелка вниз превращается в стрелку вверх */
 .more-toggle.open .chevron {
   transform: rotate(180deg);

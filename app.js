@@ -112,6 +112,7 @@ function revealFromUrl() {
     scrollItemIntoView(current);
   };
 
+  // На загрузке группа уже открыта скриптом сразу после меню.
   const submenu = openGroupFor(current);
   if (!submenu || reduceMotion.matches) {
     finish();
