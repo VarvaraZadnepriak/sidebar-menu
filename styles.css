@@ -45,7 +45,7 @@ svg {
   transition: width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar.collapsed {
+html.sidebar-collapsed .sidebar {
   width: 72px;
 }
 
@@ -144,7 +144,7 @@ svg {
   Круг сжимается вокруг иконки, а не к центру колонки.
   10 + 12 в широком меню и 14 + 8 в узком дают одну и ту же координату иконки.
 */
-.sidebar.collapsed .item {
+html.sidebar-collapsed .item {
   width: 36px;
   margin-left: 14px;
   /* Тот же верхний отступ, что у широкого пункта: иконка не смещается по вертикали */
@@ -198,11 +198,11 @@ svg {
 }
 
 /* В круге видна одна строка. Лишние строки обрезает max-height, а не перенос по узкой колонке. */
-.sidebar.collapsed .label {
+html.sidebar-collapsed .label {
   max-height: 20px;
 }
 
-.sidebar.collapsed .label-clip {
+html.sidebar-collapsed .label-clip {
   max-width: 0;
   opacity: 0;
   flex-basis: 0;

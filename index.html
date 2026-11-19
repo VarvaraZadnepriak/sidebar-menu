@@ -4,10 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sidebar menu</title>
+    <script>
+      // С сервера меню приезжает развёрнутым. Класс ставим до отрисовки,
+      // чтобы не успела отработать анимация сворачивания.
+      try {
+        if (localStorage.getItem("sidebar-collapsed") === "1") {
+          document.documentElement.classList.add("sidebar-collapsed");
+        }
+      } catch (e) {}
+    </script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <!-- Меню слева. Класс collapsed скрипт вешает при схлопывании до иконок. -->
+    <!-- Меню слева. Класс sidebar-collapsed на html сворачивает его до иконок. -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
         <!--

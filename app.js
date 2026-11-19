@@ -8,6 +8,19 @@ const tooltip = document.getElementById("tooltip");
 
 let tipTimer = 0;
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const collapsedKey = "sidebar-collapsed";
+
+function isCollapsed() {
+  return document.documentElement.classList.contains("sidebar-collapsed");
+}
+
+// Подпись и aria кнопки гамбургера следуют за уже выставленным классом.
+function syncToggle(collapsed) {
+  const name = collapsed ? "Expand menu" : "Collapse menu";
+  menuToggle.setAttribute("aria-expanded", String(!collapsed));
+  menuToggle.setAttribute("aria-label", name);
+  menuToggle.dataset.tooltip = name;
+}
 
 // Фиксирует ширину подписи, чтобы при смене ширины колонки текст не переносился заново.
 function pinLabels() {
@@ -26,7 +39,7 @@ function pinnedLabels() {
 // После раскрытия колонки отдаёт подписям их настоящую высоту с переносом.
 function settleLabels() {
   const labels = pinnedLabels();
-  if (sidebar.classList.contains("collapsed")) return;
+  if (isCollapsed()) return;
 
   labels.forEach((label) => {
     label.style.width = "";
@@ -145,7 +158,7 @@ function labelTruncated(element) {
 }
 
 function showTip(element) {
-  const collapsed = sidebar.classList.contains("collapsed");
+  const collapsed = isCollapsed();
   // По умолчанию подсказка только у свёрнутого меню. data-tip="always" — исключение.
   const mode = element.dataset.tip || "collapsed";
   if (mode === "collapsed" && !collapsed && !labelTruncated(element)) return;
@@ -166,7 +179,7 @@ function showTip(element) {
 }
 
 function scheduleTip(element) {
-  const collapsed = sidebar.classList.contains("collapsed");
+  const collapsed = isCollapsed();
   const mode = element.dataset.tip || "collapsed";
   if (mode === "collapsed" && !collapsed && !labelTruncated(element)) return;
   clearTimeout(tipTimer);
@@ -181,7 +194,7 @@ document.querySelectorAll("[data-tooltip]").forEach((element) => {
 });
 
 menuToggle.addEventListener("click", () => {
-  const collapsing = !sidebar.classList.contains("collapsed");
+  const collapsing = !isCollapsed();
   if (collapsing && !reduceMotion.matches) {
     pinLabels();
     sidebar.getBoundingClientRect();
@@ -190,11 +203,14 @@ menuToggle.addEventListener("click", () => {
     });
   }
 
-  const collapsed = sidebar.classList.toggle("collapsed");
-  const name = collapsed ? "Expand menu" : "Collapse menu";
-  menuToggle.setAttribute("aria-expanded", String(!collapsed));
-  menuToggle.setAttribute("aria-label", name);
-  menuToggle.dataset.tooltip = name;
+  const collapsed = !isCollapsed();
+  document.documentElement.classList.toggle("sidebar-collapsed", collapsed);
+  syncToggle(collapsed);
+  // Сайт отдаёт новую страницу без класса свёрнутости, поэтому выбор
+  // пользователя хранится в браузере. Иначе клик по пункту снова разворачивает меню.
+  try {
+    localStorage.setItem(collapsedKey, collapsed ? "1" : "0");
+  } catch (e) {}
   hideTip();
 
   if (reduceMotion.matches) settleLabels();
@@ -205,7 +221,7 @@ sidebar.addEventListener("transitionend", (event) => {
   settleLabels();
 });
 
-// Клик по группе More или по пункту. Адрес меняется без перезагрузки.
+// Клик по группе More или по пункту.
 nav.addEventListener("click", (event) => {
   const more = event.target.closest(".more-toggle");
   if (more && nav.contains(more)) {
@@ -216,7 +232,11 @@ nav.addEventListener("click", (event) => {
   const item = event.target.closest(".item");
   if (!item || !nav.contains(item) || !item.dataset.path) return;
   if (item.dataset.path !== currentPath()) {
-    history.pushState(null, "", item.dataset.path);
+    // Адрес меняется полной загрузкой, как на сайте с серверным рендерингом,
+    // а не через pushState. Свёрнутость при этом не сбрасывается — её уже
+    // восстановил скрипт в head.
+    location.assign(item.dataset.path);
+    return;
   }
   revealFromUrl();
 });
@@ -225,6 +245,5 @@ nav.addEventListener("click", (event) => {
 nav.addEventListener("scroll", hideTip, { passive: true });
 window.addEventListener("resize", hideTip);
 
-// Вставка адреса перезагружает страницу. Назад и вперёд приходят сюда.
-window.addEventListener("popstate", revealFromUrl);
+syncToggle(isCollapsed());
 revealFromUrl();
